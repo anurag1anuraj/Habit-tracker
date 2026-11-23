@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <title>Brain Power | 30-Day Tracker</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #151f31;
+      --card-soft: #1d2a40;
+      --text: #f4f7fb;
+      --muted: #9baac0;
+      --line: #2b3a52;
+      --green: #45d6a0;
+      --green-dark: #16865f;
+      --blue: #9bbcff;
+      --danger: #ff9b9b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: radial-gradient(ellipse at top, #1a2b48 0%, var(--bg) 58%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    .container { width: min(760px, 100%); margin: auto; padding: 24px 15px 42px; }
+    .header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .eyebrow { color: var(--green); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 5px 0; font-size: clamp(29px, 7vw, 40px); line-height: 1.1; }
+    .subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+    .tag { flex-shrink: 0; border: 1px solid #326a58; border-radius: 999px; padding: 6px 11px; color: #a6f2d2; background: #15372e; font-size: 12px; font-weight: 800; }
+    .card { margin: 14px 0; padding: 18px; border: 1px solid var(--line); border-radius: 19px; background: rgba(21,31,49,.96); box-shadow: 0 12px 30px #0002; }
+    .progress-top { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .label { color: var(--muted); font-size: 12px; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
+    .percent { display: block; color: var(--green); font-size: 30px; font-weight: 850; line-height: 1.2; }
+    .count-label { color: var(--muted); font-size: 13px; text-align: right; }
+    .progress-track { height: 10px; overflow: hidden; border-radius: 99px; background: #2b3950; }
+    .progress-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green-dark), var(--green)); transition: width .2s ease; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 15px; }
+    .stat { padding: 12px; border-radius: 13px; background: var(--card-soft); }
+    .stat small { display: block; color: var(--muted); font-size: 12px; }
+    .stat strong { display: block; margin-top: 2px; font-size: 22px; }
+    .day-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .day-nav h2 { margin: 0; font-size: 20px; }
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+    .nav-button, .secondary-button {
+      border: 1px solid var(--line); border-radius: 11px; padding: 10px 14px;
+      color: var(--text); background: #202d43;
+    }
+    button:disabled { opacity: .35; cursor: not-allowed; }
+    select {
+      width: 100%; margin-top: 14px; padding: 12px; border: 1px solid var(--line);
+      border-radius: 11px; color: var(--text); background: #101a2a;
+    }
+    .section-title { margin: 0 0 9px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .habit { display: flex; align-items: center; gap: 12px; padding: 13px 2px; border-bottom: 1px solid var(--line); cursor: pointer; }
+    .habit:last-child { border-bottom: 0; }
+    .habit-time { min-width: 76px; color: var(--blue); font-size: 12px; font-weight: 750; }
+    .habit-name { flex: 1; font-size: 14px; font-weight: 650; }
+    .habit.done .habit-name { color: var(--muted); text-decoration: line-through; }
+    .habit input { width: 24px; height: 24px; min-width: 24px; margin: 0; accent-color: var(--green-dark); cursor: pointer; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+    .actions button { flex: 1; min-width: 130px; }
+    .primary-button { padding: 12px 14px; border: 0; border-radius: 11px; color: #08251b; background: var(--green); font-weight: 800; }
+    .save-status { margin: 12px 1px 0; color: var(--green); font-size: 12px; }
+    .note { margin: 10px 1px 0; color: var(--muted); font-size: 12px; }
+    footer { padding: 9px 0; color: var(--muted); font-size: 12px; text-align: center; }
+    .toast {
+      position: fixed; bottom: 18px; left: 50%; z-index: 5; transform: translateX(-50%);
+      padding: 9px 15px; border-radius: 99px; color: #07301f; background: #baf5d9;
+      font-size: 13px; font-weight: 800; opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .toast.show { opacity: 1; }
+    @media (min-width: 600px) { .container { padding-top: 34px; } .card { padding: 22px; } .habit { padding: 15px 4px; } }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <div>
+        <div class="eyebrow">Your daily habit tracker</div>
+        <h1>Brain Power</h1>
+        <p class="subtitle">A simple 30-day routine for focus, memory and better sleep.</p>
+      </div>
+      <span class="tag">30 DAYS</span>
+    </header>
+
+    <section class="card">
+      <div class="progress-top">
+        <div>
+          <div class="label">Today's progress</div>
+          <strong class="percent" id="percent">0%</strong>
+        </div>
+        <div class="count-label" id="completedCount">0 of 15 completed</div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="stats">
+        <div class="stat"><small>Selected day</small><strong id="dayStat">Day 1</strong></div>
+        <div class="stat"><small>Tasks completed</small><strong id="taskStat">0 / 15</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="day-nav">
+        <button class="nav-button" id="previousDay" type="button" aria-label="Previous day">←</button>
+        <h2 id="dayHeading">Day 1 of 30</h2>
+        <button class="nav-button" id="nextDay" type="button" aria-label="Next day">→</button>
+      </div>
+      <select id="daySelect" aria-label="Select a day"></select>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Daily checklist</h2>
+      <div id="habitList"></div>
+      <div class="actions">
+        <button class="primary-button" id="completeAll" type="button">Mark all complete</button>
+        <button class="secondary-button" id="resetDay" type="button">Reset this day</button>
+      </div>
+      <p class="save-status" id="saveStatus" aria-live="polite">● Saved on this device</p>
+      <p class="note">Your progress is automatically saved in this browser using localStorage.</p>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">A gentle reminder</h2>
+      <p style="margin:0">You do not need to complete everything perfectly. Prioritise enough sleep, regular movement and focused practice. Most adults need 7–9 hours of sleep.</p>
+    </section>
+    <footer>Brain Power · 30-Day Challenge</footer>
+  </main>
+  <div class="toast" id="toast" role="status">Progress saved</div>
+
+  <script>
+    "use strict";
+
+    // Daily tasks: [time, task]
+    const HABITS = [
+      ["6:00 AM", "Wake up and drink water"],
+      ["6:15 AM", "Walking / exercise"],
+      ["7:15 AM", "Healthy breakfast"],
+      ["7:45 AM", "English reading"],
+      ["8:15 AM", "Programming / learning"],
+      ["9:30 AM", "Focus practice (25 minutes)"],
+      ["10:30 AM", "Memory exercises"],
+      ["1:30 PM", "Reading / learning"],
+      ["2:00 PM", "Programming practice"],
+      ["3:30 PM", "Maths / puzzles"],
+      ["4:00 PM", "Revision"],
+      ["5:00 PM", "Outdoor walk"],
+      ["8:00 PM", "Review today's learning"],
+      ["8:30 PM", "Reduce screen time"],
+      ["9:30 PM", "Go to sleep"]
+    ];
+
+    // This key stores all 30 days of checklist data in this browser.
+    const STORAGE_KEY = "brainPowerTracker_v2";
+    let currentDay = 1;
+    let trackerData = loadData();
+
+    const el = (id) => document.getElementById(id);
+
+    // Load saved progress from localStorage when the page opens.
+    function loadData() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : {};
+      } catch (error) {
+        console.error("Could not load tracker data:", error);
+        return {};
+      }
+    }
+
+    // Save progress to localStorage whenever a checkbox changes.
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(trackerData));
+        el("saveStatus").textContent = "● Saved on this device";
+        return true;
+      } catch (error) {
+        console.error("Could not save tracker data:", error);
+        el("saveStatus").textContent = "● Could not save — browser storage may be unavailable";
+        return false;
+      }
+    }
+
+    function getDayData() {
+      if (!trackerData[currentDay]) trackerData[currentDay] = {};
+      return trackerData[currentDay];
+    }
+
+    function showToast(message) {
+      const toast = el("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1200);
+    }
+
+    function render() {
+      el("dayHeading").textContent = `Day ${currentDay} of 30`;
+      el("dayStat").textContent = `Day ${currentDay}`;
+      el("daySelect").value = String(currentDay);
+      el("previousDay").disabled = currentDay === 1;
+      el("nextDay").disabled = currentDay === 30;
+
+      const dayData = getDayData();
+      const list = el("habitList");
+      list.innerHTML = "";
+
+      HABITS.forEach(([time, name], index) => {
+        const row = document.createElement("label");
+        row.className = "habit" + (dayData[index] ? " done" : "");
+
+        const timeText = document.createElement("span");
+        timeText.className = "habit-time";
+        timeText.textContent = time;
+
+        const taskText = document.createElement("span");
+        taskText.className = "habit-name";
+        taskText.textContent = name;
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = Boolean(dayData[index]);
+        checkbox.setAttribute("aria-label", name);
+
+        checkbox.addEventListener("change", () => {
+          getDayData()[index] = checkbox.checked;
+          saveData();
+          render();
+          showToast("Progress saved");
+        });
+
+        row.append(timeText, taskText, checkbox);
+        list.appendChild(row);
+      });
+
+      const completed = HABITS.reduce((total, _, index) => total + (dayData[index] ? 1 : 0), 0);
+      const percentage = Math.round((completed / HABITS.length) * 100);
+
+      el("percent").textContent = `${percentage}%`;
+      el("completedCount").textContent = `${completed} of ${HABITS.length} completed`;
+      el("taskStat").textContent = `${completed} / ${HABITS.length}`;
+      el("progressFill").style.width = `${percentage}%`;
+    }
+
+    // Fill the day selector with Day 1 to Day 30.
+    for (let day = 1; day <= 30; day++) {
+      const option = document.createElement("option");
+      option.value = String(day);
+      option.textContent = `Day ${day}`;
+      el("daySelect").appendChild(option);
+    }
+
+    el("previousDay").addEventListener("click", () => {
+      if (currentDay > 1) {
+        currentDay--;
+        render();
+      }
+    });
+
+    el("nextDay").addEventListener("click", () => {
+      if (currentDay < 30) {
+        currentDay++;
+        render();
+      }
+    });
+
+    el("daySelect").addEventListener("change", (event) => {
+      currentDay = Number(event.target.value);
+      render();
+    });
+
+    el("completeAll").addEventListener("click", () => {
+      trackerData[currentDay] = {};
+      HABITS.forEach((_, index) => { trackerData[currentDay][index] = true; });
+      saveData();
+      render();
+      showToast("All tasks completed");
+    });
+
+    el("resetDay").addEventListener("click", () => {
+      const confirmed = confirm(`Clear all checkmarks for Day ${currentDay}?`);
+      if (!confirmed) return;
+      delete trackerData[currentDay];
+      saveData();
+      render();
+      showToast("This day has been reset");
+    });
+
+    // First render displays the data previously saved in localStorage.
+    render();
+  </script>
+</body>
+</html>
